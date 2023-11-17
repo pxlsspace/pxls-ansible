@@ -14,8 +14,3 @@ jvm_memory_max: "2G"
 psql_username: pxls
 psql_password: changeme123
 psql_database: pxls
-
-firewall_allowed_tcp_ports:
-  - "22"
-  - "80"
-  - "443"

@@ -2,6 +2,12 @@
 
 This Ansible playbook automates the setup of a machine for running [pxls.space](https://pxls.space/), a collaborative pixel art platform. The playbook is designed for a target host group named "pxls"
 
+## Playbook Usage
+- Fill in the configuration fields in vars/main.yml
+- Add the target servers to inventory.yml
+- Execute playbook using `ansible-playbook -i inventory.yml main.yml`
+- Enjoy!
+
 ## Playbook Structure
 
 ### 1. Machine Setup
