@@ -1,0 +1,6 @@
+pxls:
+  hosts:
+    # pxls:
+    #   ansible_host: 10.13.37.42
+    #   ansible_user: nevergonnagiveyouup
+    #   ansible_pass: nevergonnaletyoudown

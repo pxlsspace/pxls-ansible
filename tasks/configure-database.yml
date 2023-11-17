@@ -1,0 +1,18 @@
+---
+- name: Install psycopg2 package
+  become: yes
+  apt:
+    name: python3-psycopg2
+    state: present
+
+- name: Create PostgreSQL user
+  command: |
+    sudo -u postgres psql -c "CREATE USER {{ psql_username }} WITH ENCRYPTED PASSWORD '{{ psql_password }}'"
+    
+- name: Create PostgreSQL database
+  command: |
+    sudo -u postgres psql -c "CREATE DATABASE {{ psql_database }}"
+    
+- name: Grant all privileges on the database to the user
+  command: |
+    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE {{ psql_database }} TO {{ psql_username }};"

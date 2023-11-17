@@ -1,0 +1,31 @@
+---
+- name: Check if Pxls is reachable
+  shell: "curl -sSf http://127.0.0.1:{{ pxls_port }}"
+  ignore_errors: true
+  register: curl_output
+
+- name: Display status based on response
+  debug:
+    msg: "Pxls is running"
+  when: curl_output.rc == 0
+
+- name: Display status if port is not reachable
+  debug:
+    msg: "Pxls is not running or port is not reachable"
+  when: curl_output.rc != 0
+
+- name: Check if NGINX Proxy is reachable
+  shell: "curl -sSf http://127.0.0.1:80"
+  ignore_errors: true
+  register: curl_output
+
+- name: Display status based on response
+  debug:
+    msg: "NGINX is running"
+  when: curl_output.rc == 0
+
+- name: Display status if port is not reachable
+  debug:
+    msg: "NGINX is not running or port is not reachable"
+  when: curl_output.rc != 0
+

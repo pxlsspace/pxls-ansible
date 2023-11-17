@@ -1,0 +1,54 @@
+- name: pxls.space Machine Setup
+  hosts: pxls
+
+  vars_files:
+    - vars/main.yml
+  
+  pre_tasks:
+    - name: Who are we?!
+      command: whoami
+      changed_when: no
+      become: no
+      register: whoami
+    - name: Set a fact with the user name.
+      set_fact:
+        login_user: "{{ whoami.stdout }}"
+    - name: Ensure apt cache is updated.
+      become: yes
+      apt:
+        update_cache: true
+        cache_valid_time: 600
+    - name: Upgrade existing packages.
+      apt:
+        upgrade: yes
+        autoremove: yes
+        autoclean: yes
+      become: yes
+
+  tasks:
+  - import_tasks: tasks/setup-host.yml
+  - import_tasks: tasks/prepare-apt.yml
+  - import_tasks: tasks/install-software.yml
+  - import_tasks: tasks/configure-database.yml
+  - import_tasks: tasks/configure-nginx.yml
+  - import_tasks: tasks/build-pxls.yml
+  - import_tasks: tasks/deploy-pxls.yml
+  - import_tasks: tasks/post-deploy.yml
+
+  - name: Reboot the server
+    become: yes
+    reboot:
+
+  - name: Wait for SSH to be available again
+    wait_for_connection:
+      connect_timeout: 10
+      sleep: 5
+      delay: 5
+      timeout: 300
+
+  - name: Deployment done!
+    debug:
+      msg: |
+        Pxls was successfully deployed. If not already done, you'll have to setup DNS A Records to {{ public_hostname }}, and possibly configure iptables/ufw firewall.
+        The nginx vhost is configured without any SSL encryption. Use acme.sh or certbot to resolve this.
+        Thank you for using the ansible deploy script. If there are any issues with this script (and not pxls itself), feel free to create an issue.

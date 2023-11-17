@@ -1,0 +1,17 @@
+---
+- name: Create Nginx configuration file
+  become: true
+  template:
+    src: "files/nginx/pxls_vhost.conf.j2"
+    dest: "/etc/nginx/sites-available/pxls_vhost"
+- name: Enable Nginx site
+  become: true
+  file:
+    src: "/etc/nginx/sites-available/pxls_vhost"
+    dest: "/etc/nginx/sites-enabled/pxls_vhost"
+    state: link
+- name: Reload Nginx
+  become: true
+  service:
+    name: nginx
+    state: reloaded

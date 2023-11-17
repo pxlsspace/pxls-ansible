@@ -1,0 +1,39 @@
+---
+- name: Create pxls build directory
+  become: yes
+  file:
+    path: "{{ pxls_build_path }}"
+    state: directory
+    owner: "{{ login_user }}"
+    group: "{{ login_user }}"
+
+- name: Download latest pxls repository
+  git:
+    repo: "https://github.com/pxlsspace/Pxls.git"
+    dest: "{{ pxls_build_path }}"
+  ignore_errors: yes
+
+- name: Pre-build task - Install npm packages
+  command: /usr/bin/npm install
+  args:
+    chdir: "{{ pxls_build_path }}"
+
+- name: Build task (1/4) - Generate Potfiles
+  command: /usr/bin/node generate-potfile.js
+  args:
+    chdir: "{{ pxls_build_path }}"
+
+- name: Build task (2/4) - Update localizations
+  command: /usr/bin/bash update-localizations.sh
+  args:
+    chdir: "{{ pxls_build_path }}"
+
+- name: Build task (3/4) - Compile localizations
+  command: /usr/bin/node compile-localizations.js
+  args:
+    chdir: "{{ pxls_build_path }}"
+
+- name: Build task (4/4) - Create clean package
+  command: /usr/bin/mvn clean package
+  args:
+    chdir: "{{ pxls_build_path }}"

@@ -1,0 +1,21 @@
+---
+node_version: 20
+java_version: 17
+
+public_hostname: pxls.world
+
+pxls_build_path: /usr/src/pxls
+pxls_deploy_path: /srv/pxls
+pxls_port: 8551
+
+jvm_memory_min: "1G"
+jvm_memory_max: "2G"
+
+psql_username: pxls
+psql_password: changeme123
+psql_database: pxls
+
+firewall_allowed_tcp_ports:
+  - "22"
+  - "80"
+  - "443"

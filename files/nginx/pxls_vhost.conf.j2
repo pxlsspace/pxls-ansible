@@ -1,0 +1,67 @@
+limit_req_zone $http_cf_connecting_ip zone=ip_rate:100m rate=15r/s;
+
+limit_req_log_level warn;
+limit_req_status 429;
+log_format cache_log '[$time_local] [Cache:$upstream_cache_status] [$host] [Remote_Addr: $remote_addr] [Cloudflare: $http_CF_Connecting_IP] - $remote_user - $server_name to: $upstream_addr: "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" ' ;
+proxy_cache_path /var/cache/nginx keys_zone=pxls:30m;
+
+upstream pxls
+{
+	server 127.0.0.1:{{ pxls_port }};
+}
+
+server
+{
+	listen 80;
+	listen [::]:80;
+	server_name {{ public_hostname }} www.{{ public_hostname }};
+
+	access_log /var/log/nginx/{{ public_hostname }}-access.log cache_log;
+	error_log /var/log/nginx/{{ public_hostname }}-error.log warn;
+
+	root /var/www/{{ public_hostname }};
+	index index.html index.php;
+
+	limit_req zone=ip_rate burst=150;
+
+	proxy_ignore_headers Set-Cookie;
+	proxy_max_temp_file_size 0;
+	proxy_intercept_errors on;
+
+	location /
+	{
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header Host $host;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header CF-Connecting-IP $http_CF_Connecting_IP;
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection $http_connection;
+
+		location ~ ^/profile/.+
+		{
+			proxy_pass http://pxls;
+		}
+
+		location /ws
+		{
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection "Upgrade";
+			proxy_pass http://pxls;
+		}
+
+		location /admin
+		{
+			if ($http_origin ~* (.*\.pxls.space))
+			{
+				add_header 'Access-Control-Allow-Origin' "$http_origin";
+				add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, DELETE, PUT';
+				add_header 'Access-Control-Allow-Credentials' 'true';
+				add_header 'Access-Control-Allow-Headers' 'User-Agent,Keep-Alive,Content-Type';
+			}
+			proxy_pass http://pxls;
+		}
+
+		proxy_pass http://pxls;
+	}
+}

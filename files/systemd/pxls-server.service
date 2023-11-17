@@ -1,0 +1,21 @@
+[Unit]
+Description=pxls.space Gameserver
+Wants=network-online.target
+After=network-online.target
+After=getty.service
+Requires=pxls-server.socket
+
+[Service]
+User={{ login_user }}
+Group={{ login_user }}
+WorkingDirectory={{ pxls_deploy_path }}
+ExecStart=/usr/bin/java -Xms{{ jvm_memory_min }} -Xmx{{ jvm_memory_max }} -Dfile.encoding=UTF-8 -jar pxls.jar
+StandardInput=socket
+StandardOutput=journal
+Type=simple
+RemainAfterExit=false
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
