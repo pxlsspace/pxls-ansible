@@ -63,3 +63,4 @@
       - { path: "/etc/ssl/{{ public_hostname}}/privkey.pem" }
       - { path: '/etc/ssl/dhparam.pem' }
       - { path: '/usr/local/pgsql' }
+      - { path: '/etc/.pxls_ansible' }
