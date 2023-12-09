@@ -1,0 +1,35 @@
+upstream pxls {
+  server 127.0.0.1:{{ frontend_port }};
+}
+
+server {
+    {% if provide_ssl_certificates %}
+    listen                  443 ssl http2;
+    listen                  [::]:443 ssl http2;
+    {% else %}
+    listen                  80;
+    listen                  [::]:80;
+    {% endif %}
+    server_name             {{ public_hostname }} www.{{ public_hostname }};
+    root                    /var/www/{{ public_hostname }}/;
+
+    {% if provide_ssl_certificates %}
+    # SSL
+    ssl_certificate         /etc/ssl/{{ public_hostname }}/fullchain.pem;
+    ssl_certificate_key     /etc/ssl/{{ public_hostname }}/privkey.pem;
+    {% endif %}
+
+    # security
+    include                 /etc/nginx/snippets/security.conf;
+
+    # logging
+    access_log              /var/log/nginx/{{ public_hostname }}-access.log combined buffer=512k flush=1m;
+    error_log               /var/log/nginx/{{ public_hostname }}-error.log warn;
+
+    # reverse proxy
+    location / {
+        proxy_set_header Host $host;
+        include               /etc/nginx/snippets/proxy.conf;
+        proxy_pass            http://pxls;
+    }
+}

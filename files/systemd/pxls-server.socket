@@ -1,3 +1,0 @@
-[Socket]
-ListenFIFO=%t/pxls.stdin
-Service=pxls-server.service

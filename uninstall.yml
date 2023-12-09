@@ -1,0 +1,65 @@
+- name: pxls.space Uninstall Playbook
+  hosts: pxls
+
+  vars_files:
+    - vars/main.yml
+  
+  pre_tasks:
+    - name: Who are we?!
+      command: whoami
+      changed_when: no
+      become: no
+      register: whoami
+    - name: Set a fact with the user name.
+      set_fact:
+        login_user: "{{ whoami.stdout }}"
+    - name: Check if our internal ansible file already exists
+      stat:
+        path: "/etc/.pxls_ansible"
+      register: pxansible_stat
+      ignore_errors: true
+    - name: Fail if internal ansible file does not exist
+      fail:
+        msg: "Our test-file does not exist. This playbook is only compatible with uninstalling changes made by the ansible setup script."
+      when: not pxansible_stat.stat.exists
+
+  tasks:
+  - name: Remove PHP 7.x repository (needed for the admin panel)
+    command: sudo add-apt-repository ppa:ondrej/php --yes --remove
+    become: yes
+  - name: Uninstall previously installed packages
+    become: yes
+    apt:
+      name:
+        - software-properties-common
+        - ca-certificates
+        - curl
+        - gnupg
+        - gettext
+        - nginx-full
+        - nodejs
+        - postgresql
+        - openjdk-{{ java_version }}-jdk
+        - openjdk-{{ java_version }}-jre
+        - maven
+      state: absent
+      autoremove: yes
+      purge: true
+  - name: Remove files and folders
+    become: yes
+    file:
+      path: "{{ item.path }}"
+      state: absent
+    loop:
+      - { path: '/etc/apt/keyrings/nodesource.gpg' }
+      - { path: '/etc/apt/sources.list.d/nodesource.list' }
+      - { path: '{{ frontend_deploy_path }}' }
+      - { path: '{{ server_build_path }}' }
+      - { path: '{{ server_deploy_path }}' }
+      - { path: '/etc/nginx/snippets' }
+      - { path: "/etc/nginx/sites-available/{{ public_hostname }}" }
+      - { path: "/etc/nginx/sites-enabled/{{ public_hostname }}" }
+      - { path: "/etc/ssl/{{ public_hostname}}/fullchain.pem" }
+      - { path: "/etc/ssl/{{ public_hostname}}/privkey.pem" }
+      - { path: '/etc/ssl/dhparam.pem' }
+      - { path: '/usr/local/pgsql' }

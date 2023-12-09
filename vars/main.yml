@@ -1,16 +1,25 @@
 ---
+# general host setup
+public_hostname: pxls.world
+
 node_version: 20
 java_version: 17
 
-public_hostname: pxls.world
+# build and deploy pxls
+server_build_path: /usr/src/pxls/server
+server_deploy_path: /srv/pxls/server
+frontend_deploy_path: /srv/pxls/frontend
 
-pxls_build_path: /usr/src/pxls
-pxls_deploy_path: /srv/pxls
-pxls_port: 8551
+frontend_port: 4567
+server_port: 5678
 
+provide_ssl_certificates: yes
+
+# systemd runtime parameters
 jvm_memory_min: "1G"
 jvm_memory_max: "2G"
 
+# database settings
 psql_username: pxls
 psql_password: changeme123
 psql_database: pxls

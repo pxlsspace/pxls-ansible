@@ -1,0 +1,3 @@
+[Socket]
+ListenFIFO=%t/pxls/frontend.stdin
+Service=pxls-frontend.service

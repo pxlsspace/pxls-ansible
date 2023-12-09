@@ -1,0 +1,4 @@
+files/certificates/fullchain.pem
+files/certificates/privkey.pem
+id_ansible
+id_ansible.pub

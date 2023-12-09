@@ -1,15 +1,15 @@
 [Unit]
-Description=pxls.space Gameserver
+Description=pxls.space Frontend
 Wants=network-online.target
 After=network-online.target
 After=getty.service
-Requires=pxls-server.socket
+Requires=pxls-frontend.socket
 
 [Service]
 User={{ login_user }}
 Group={{ login_user }}
-WorkingDirectory={{ pxls_deploy_path }}
-ExecStart=/usr/bin/java -Xms{{ jvm_memory_min }} -Xmx{{ jvm_memory_max }} -Dfile.encoding=UTF-8 -jar pxls.jar
+WorkingDirectory={{ frontend_deploy_path }}
+ExecStart=/usr/bin/npm start
 StandardInput=socket
 StandardOutput=journal
 Type=simple

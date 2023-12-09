@@ -8,6 +8,7 @@
       - curl
       - gnupg
       - gettext
+      - acl
     state: present
 
 - name: Create directory for apt keyrings

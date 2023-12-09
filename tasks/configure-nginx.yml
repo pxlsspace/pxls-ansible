@@ -1,15 +1,64 @@
 ---
-- name: Create Nginx configuration file
+- name: Make sure directories exist
+  become: yes
+  file:
+    path: "/etc/nginx/{{ item.dir }}"
+    state: directory
+  loop:
+    - { dir: 'snippets' }
+    - { dir: 'sites-available' }
+    - { dir: 'sites-enabled' }
+
+- name: Copy base configuration files
   become: true
   template:
-    src: "files/nginx/pxls_vhost.conf.j2"
-    dest: "/etc/nginx/sites-available/pxls_vhost"
+    src: "files/nginx/{{ item.src }}"
+    dest: "/etc/nginx/{{ item.dest }}"
+  loop:
+    - { src: 'vhost_default.conf', dest: 'sites-available/default' }
+    - { src: 'nginx.conf', dest: 'nginx.conf' }
+    - { src: 'snippets_general.conf', dest: 'snippets/general.conf' }
+    - { src: 'snippets_letsencrypt.conf', dest: 'snippets/letsencrypt.conf' }
+    - { src: 'snippets_proxy.conf', dest: 'snippets/proxy.conf' }
+    - { src: 'snippets_security.conf', dest: 'snippets/security.conf' }
+
+- name: Create directory for SSL certificates
+  become: yes
+  when: "provide_ssl_certificates is defined and provide_ssl_certificates"
+  file:
+    path: "/etc/ssl/{{ public_hostname }}"
+    state: directory
+
+- name: Copy SSL certificates
+  become: true
+  when: "provide_ssl_certificates is defined and provide_ssl_certificates"
+  template:
+    src: "files/certificates/{{ item.src }}"
+    dest: "/etc/ssl/{{ public_hostname}}/{{ item.dest }}"
+  loop:
+    - { src: 'fullchain.pem', dest: 'fullchain.pem' }
+    - { src: 'privkey.pem', dest: 'privkey.pem' }
+
+- name: Generate DH parameter file
+  become: true
+  when: "provide_ssl_certificates is defined and provide_ssl_certificates"
+  openssl_dhparam:
+    path: /etc/ssl/dhparam.pem
+    size: 2048
+
+- name: Create NGINX virtual host
+  become: true
+  template:
+    src: "files/nginx/vhost_pxls.conf.j2"
+    dest: "/etc/nginx/sites-available/{{ public_hostname }}"
+
 - name: Enable Nginx site
   become: true
   file:
-    src: "/etc/nginx/sites-available/pxls_vhost"
-    dest: "/etc/nginx/sites-enabled/pxls_vhost"
+    src: "/etc/nginx/sites-available/{{ public_hostname }}"
+    dest: "/etc/nginx/sites-enabled/{{ public_hostname }}"
     state: link
+
 - name: Reload Nginx
   become: true
   service:

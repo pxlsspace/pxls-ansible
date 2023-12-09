@@ -6,13 +6,31 @@
     state: present
 
 - name: Create PostgreSQL user
+  become: yes
+  become_user: postgres
+  become_method: sudo
+  ignore_errors: true
   command: |
-    sudo -u postgres psql -c "CREATE USER {{ psql_username }} WITH ENCRYPTED PASSWORD '{{ psql_password }}'"
+    psql -c "CREATE USER {{ psql_username }} WITH ENCRYPTED PASSWORD '{{ psql_password }}'"
+  args:
+    chdir: "/tmp"
     
 - name: Create PostgreSQL database
+  become: yes
+  become_user: postgres
+  become_method: sudo
+  ignore_errors: true
   command: |
-    sudo -u postgres psql -c "CREATE DATABASE {{ psql_database }}"
+    psql -c "CREATE DATABASE {{ psql_database }}"
+  args:
+    chdir: "/tmp"
     
 - name: Grant all privileges on the database to the user
+  become: yes
+  become_user: postgres
+  become_method: sudo
+  ignore_errors: true
   command: |
-    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE {{ psql_database }} TO {{ psql_username }};"
+    psql -c "GRANT ALL PRIVILEGES ON DATABASE {{ psql_database }} TO {{ psql_username }};"
+  args:
+    chdir: "/tmp"

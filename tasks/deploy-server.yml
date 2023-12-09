@@ -1,0 +1,68 @@
+---
+- name: Create pxls target directory
+  become: yes
+  file:
+    path: "{{ server_deploy_path }}"
+    state: directory
+    owner: "{{ login_user }}"
+    group: "{{ login_user }}"
+
+- name: Copy production package to deploy path
+  copy:
+    remote_src: yes
+    src: "{{ server_build_path }}/target/pxls-1.0-SNAPSHOT.jar"
+    dest: "{{ server_deploy_path }}/pxls.jar"
+
+- name: Copy configuration files
+  copy:
+    remote_src: yes
+    src: "{{ server_build_path }}/{{ item.src }}"
+    dest: "{{ server_deploy_path }}/{{ item.dest }}"
+  loop:
+    - { src: 'resources/reference.conf', dest: 'pxls.conf' }
+    - { src: 'resources/palette-reference.conf', dest: 'palette.conf' }
+    - { src: 'resources/roles-reference.conf', dest: 'roles.conf' }
+
+- name: Pre-create storage path
+  become: yes
+  file:
+    path: "{{ server_deploy_path }}/storage"
+    state: directory
+    owner: "{{ login_user }}"
+    group: "{{ login_user }}"
+
+- name: Server - Set Backend Port
+  ansible.builtin.lineinfile:
+    path: "{{ server_deploy_path }}/pxls.conf"
+    regexp: "  port: 4567"
+    line: "  port: {{ server_port }}"
+
+- name: Server - Set Frontend Port
+  ansible.builtin.lineinfile:
+    path: "{{ server_deploy_path }}/pxls.conf"
+    regexp: "  frontEndPort: 3000"
+    line: "  frontEndPort: {{ frontend_port }}"
+
+- name: Server - Set JDBC User
+  ansible.builtin.lineinfile:
+    path: "{{ server_deploy_path }}/pxls.conf"
+    regexp: '  user: ""'
+    line: '  user: "{{ psql_username }}"'
+
+- name: Server - Set JDBC Pass
+  ansible.builtin.lineinfile:
+    path: "{{ server_deploy_path }}/pxls.conf"
+    regexp: '  pass: ""'
+    line: '  pass: "{{ psql_password }}"'
+
+- name: Server - Set JDBC URI
+  ansible.builtin.lineinfile:
+    path: "{{ server_deploy_path }}/pxls.conf"
+    regexp: '  url: ""'
+    line: '  url: "jdbc:postgresql://localhost:5432/{{psql_database}}"'
+
+- name: Server - Set Storage Path
+  ansible.builtin.lineinfile:
+    path: "{{ server_deploy_path }}/pxls.conf"
+    regexp: "  storage: ."
+    line: "  storage: storage/"
