@@ -36,33 +36,15 @@
 
 
   tasks:
-  - name: Configure Host OS settings
-    block:
-      - import_tasks: tasks/setup-host.yml
-  - name: Prepare apt repositories
-    block:
-      - import_tasks: tasks/prepare-apt.yml
-  - name: Install common and required software
-    block:
-      - import_tasks: tasks/install-software.yml
-  - name: Configure Database
-    block:
-      - import_tasks: tasks/configure-database.yml
-  - name: Configure NGINX
-    block:
-      - import_tasks: tasks/configure-nginx.yml
-  - name: Build Server
-    block:
-      - import_tasks: tasks/build-server.yml
-  - name: Build Frontend
-    block:
-      - import_tasks: tasks/build-frontend.yml
-  - name: Deploy Server
-    block:
-      - import_tasks: tasks/deploy-server.yml
-  - name: Post Deployment
-    block:
-      - import_tasks: tasks/post-deploy.yml
+  - import_tasks: tasks/setup-host.yml
+  - import_tasks: tasks/prepare-apt.yml
+  - import_tasks: tasks/install-software.yml
+  - import_tasks: tasks/configure-database.yml
+  - import_tasks: tasks/configure-nginx.yml
+  - import_tasks: tasks/build-server.yml
+  - import_tasks: tasks/build-frontend.yml
+  - import_tasks: tasks/deploy-server.yml
+  - import_tasks: tasks/post-deploy.yml
 
   # - name: Reboot the server
   #   become: yes

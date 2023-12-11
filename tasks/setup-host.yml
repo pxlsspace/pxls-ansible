@@ -1,12 +1,13 @@
----
-- name: Set hostname to {{ public_hostname }}
-  become: yes
-  hostname:
-    name: "{{ public_hostname }}"
+  - name: Configure Host OS settings
+    block:
+      - name: Set hostname to {{ public_hostname }}
+        become: true
+        hostname:
+          name: "{{ public_hostname }}"
 
-- name: Update /etc/hosts
-  become: yes
-  lineinfile:
-    path: /etc/hosts
-    line: "127.0.0.1 {{ public_hostname }} localhost"
-    state: present
+      - name: Update /etc/hosts
+        become: true
+        lineinfile:
+          path: /etc/hosts
+          line: "127.0.0.1 {{ public_hostname }} localhost"
+          state: present

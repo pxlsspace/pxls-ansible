@@ -1,25 +1,26 @@
----
-- name: Remove server build if already exists
-  become: yes
-  file:
-    path: "{{ server_build_path }}"
-    state: absent
+- name: Build Server
+  block:
+  - name: Remove server build if already exists
+    become: true
+    file:
+      path: "{{ server_build_path }}"
+      state: absent
 
-- name: Create server build directory
-  become: yes
-  file:
-    path: "{{ server_build_path }}"
-    state: directory
-    owner: "{{ login_user }}"
-    group: "{{ login_user }}"
+  - name: Create server build directory
+    become: true
+    file:
+      path: "{{ server_build_path }}"
+      state: directory
+      owner: "{{ login_user }}"
+      group: "{{ login_user }}"
 
-- name: Download latest server repository
-  git:
-    repo: "https://github.com/pxlsspace/Pxls.git"
-    version: "no-client"
-    dest: "{{ server_build_path }}"
+  - name: Download latest server repository
+    git:
+      repo: "https://github.com/pxlsspace/Pxls.git"
+      version: "no-client"
+      dest: "{{ server_build_path }}"
 
-- name: Build task - Create clean package
-  command: /usr/bin/mvn clean package
-  args:
-    chdir: "{{ server_build_path }}"
+  - name: Build task - Create clean package
+    command: /usr/bin/mvn clean package
+    args:
+      chdir: "{{ server_build_path }}"

@@ -1,68 +1,101 @@
----
-- name: Create pxls target directory
-  become: yes
-  file:
-    path: "{{ server_deploy_path }}"
-    state: directory
-    owner: "{{ login_user }}"
-    group: "{{ login_user }}"
 
-- name: Copy production package to deploy path
-  copy:
-    remote_src: yes
-    src: "{{ server_build_path }}/target/pxls-1.0-SNAPSHOT.jar"
-    dest: "{{ server_deploy_path }}/pxls.jar"
+- name: Deploy Server
+  block:
+  - name: Create pxls target directory
+    become: true
+    file:
+      path: "{{ server_deploy_path }}"
+      state: directory
+      owner: "{{ login_user }}"
+      group: "{{ login_user }}"
 
-- name: Copy configuration files
-  copy:
-    remote_src: yes
-    src: "{{ server_build_path }}/{{ item.src }}"
-    dest: "{{ server_deploy_path }}/{{ item.dest }}"
-  loop:
-    - { src: 'resources/reference.conf', dest: 'pxls.conf' }
-    - { src: 'resources/palette-reference.conf', dest: 'palette.conf' }
-    - { src: 'resources/roles-reference.conf', dest: 'roles.conf' }
+  - name: Copy production package to deploy path
+    copy:
+      remote_src: true
+      src: "{{ server_build_path }}/target/pxls-1.0-SNAPSHOT.jar"
+      dest: "{{ server_deploy_path }}/pxls.jar"
 
-- name: Pre-create storage path
-  become: yes
-  file:
-    path: "{{ server_deploy_path }}/storage"
-    state: directory
-    owner: "{{ login_user }}"
-    group: "{{ login_user }}"
+  - name: Copy configuration files
+    copy:
+      remote_src: true
+      src: "{{ server_build_path }}/{{ item.src }}"
+      dest: "{{ server_deploy_path }}/{{ item.dest }}"
+    loop:
+      - { src: 'resources/reference.conf', dest: 'pxls.conf' }
+      - { src: 'resources/palette-reference.conf', dest: 'palette.conf' }
+      - { src: 'resources/roles-reference.conf', dest: 'roles.conf' }
 
-- name: Server - Set Backend Port
-  ansible.builtin.lineinfile:
-    path: "{{ server_deploy_path }}/pxls.conf"
-    regexp: "  port: 4567"
-    line: "  port: {{ server_port }}"
+  - name: Pre-create storage path
+    become: true
+    file:
+      path: "{{ server_deploy_path }}/storage"
+      state: directory
+      owner: "{{ login_user }}"
+      group: "{{ login_user }}"
 
-- name: Server - Set Frontend Port
-  ansible.builtin.lineinfile:
-    path: "{{ server_deploy_path }}/pxls.conf"
-    regexp: "  frontEndPort: 3000"
-    line: "  frontEndPort: {{ frontend_port }}"
+  - name: Server - Set Backend Port
+    ansible.builtin.replace:
+      path: "{{ server_deploy_path }}/pxls.conf"
+      regexp: "port: (4567)$"
+      replace: "port: {{ server_port }}"
 
-- name: Server - Set JDBC User
-  ansible.builtin.lineinfile:
-    path: "{{ server_deploy_path }}/pxls.conf"
-    regexp: '  user: ""'
-    line: '  user: "{{ psql_username }}"'
+  - name: Server - Set Frontend Port
+    ansible.builtin.replace:
+      path: "{{ server_deploy_path }}/pxls.conf"
+      regexp: "frontEndPort: (3000)$"
+      replace: "frontEndPort: {{ frontend_port }}"
 
-- name: Server - Set JDBC Pass
-  ansible.builtin.lineinfile:
-    path: "{{ server_deploy_path }}/pxls.conf"
-    regexp: '  pass: ""'
-    line: '  pass: "{{ psql_password }}"'
+  - name: Server - Set JDBC User
+    ansible.builtin.replace:
+      path: "{{ server_deploy_path }}/pxls.conf"
+      after: "database {"
+      regexp: 'user: ""$'
+      replace: 'user: "{{ psql_username }}"'
 
-- name: Server - Set JDBC URI
-  ansible.builtin.lineinfile:
-    path: "{{ server_deploy_path }}/pxls.conf"
-    regexp: '  url: ""'
-    line: '  url: "jdbc:postgresql://localhost:5432/{{psql_database}}"'
+  - name: Server - Set JDBC Pass
+    ansible.builtin.replace:
+      path: "{{ server_deploy_path }}/pxls.conf"
+      regexp: 'pass: ""$'
+      replace: '  pass: "{{ psql_password }}"'
 
-- name: Server - Set Storage Path
-  ansible.builtin.lineinfile:
-    path: "{{ server_deploy_path }}/pxls.conf"
-    regexp: "  storage: ."
-    line: "  storage: storage/"
+  - name: Server - Set JDBC URI
+    ansible.builtin.replace:
+      path: "{{ server_deploy_path }}/pxls.conf"
+      regexp: 'url: ""$'
+      replace: 'url: "jdbc:postgresql://127.0.0.1:5432/{{psql_database}}"'
+
+  - name: Server - Set Storage Path
+    ansible.builtin.replace:
+      path: "{{ server_deploy_path }}/pxls.conf"
+      regexp: "storage: (\\.)$"
+      replace: "storage: storage/"
+
+  - name: Server - Reverse Proxy Settings
+    ansible.builtin.replace:
+      path: "{{ server_deploy_path }}/pxls.conf"
+      after: "proxy {"
+      regexp: "headers: (\\[\\])$"
+      replace: "headers: ['X-Real-IP', 'CF-Connecting-IP']"
+
+  - name: Server - Set Page Title
+    ansible.builtin.replace:
+      path: "{{ server_deploy_path }}/pxls.conf"
+      after: "html {"
+      regexp: "title: (Pxls)$"
+      replace: 'title: "{{ public_hostname }}"'
+
+  - name: Server - Set Whoami Origin
+    ansible.builtin.replace:
+      path: "{{ server_deploy_path }}/pxls.conf"
+      after: "whoamiAllowedOrigins"
+      before: "oauth"
+      regexp: "https:\\/\\\\/pxls\\.space"
+      replace: "{{ 'https' if provide_ssl_certificates else 'http' }}://{{ public_hostname }}"
+
+  - name: Server - Set Login Callback
+    ansible.builtin.replace:
+      path: "{{ server_deploy_path }}/pxls.conf"
+      after: "oauth {"
+      before: "enableRegistration"
+      regexp: "callbackBase: (\\\"\\\")$"
+      replace: "callbackBase: \"{{ 'https' if provide_ssl_certificates else 'http' }}://{{ public_hostname }}/auth\""

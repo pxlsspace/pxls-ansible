@@ -1,53 +1,55 @@
----
-- name: Remove frontend deploy directory, if already exists
-  become: yes
-  file:
-    path: "{{ frontend_deploy_path }}"
-    state: absent
 
-- name: Create frontend deploy directory
-  become: yes
-  file:
-    path: "{{ frontend_deploy_path }}"
-    state: directory
-    owner: "{{ login_user }}"
-    group: "{{ login_user }}"
+- name: Build Frontend
+  block:
+  - name: Remove frontend deploy directory, if already exists
+    become: true
+    file:
+      path: "{{ frontend_deploy_path }}"
+      state: absent
 
-- name: Download latest frontend repository
-  git:
-    repo: "https://github.com/pxlsspace/pxls-web.git"
-    dest: "{{ frontend_deploy_path }}"
+  - name: Create frontend deploy directory
+    become: true
+    file:
+      path: "{{ frontend_deploy_path }}"
+      state: directory
+      owner: "{{ login_user }}"
+      group: "{{ login_user }}"
 
-- name: Install node dependencies
-  command: /usr/bin/npm install
-  args:
-    chdir: "{{ frontend_deploy_path }}"
+  - name: Download latest frontend repository
+    git:
+      repo: "https://github.com/pxlsspace/pxls-web.git"
+      dest: "{{ frontend_deploy_path }}"
 
-- name: Copy configuration reference
-  copy:
-    remote_src: yes
-    src: "{{ frontend_deploy_path }}/config.example.json5"
-    dest: "{{ frontend_deploy_path }}/config.json5"
+  - name: Install node dependencies
+    command: /usr/bin/npm install
+    args:
+      chdir: "{{ frontend_deploy_path }}"
 
-- name: Frontend - Set Frontend Port
-  ansible.builtin.lineinfile:
-    path: "{{frontend_deploy_path}}/config.json5"
-    regexp: "  port: 3000,"
-    line: "  port: {{ frontend_port }},"
+  - name: Copy configuration reference
+    copy:
+      remote_src: true
+      src: "{{ frontend_deploy_path }}/config.example.json5"
+      dest: "{{ frontend_deploy_path }}/config.json5"
 
-- name: Frontend - Set proxyTo value
-  ansible.builtin.lineinfile:
-    path: "{{frontend_deploy_path}}/config.json5"
-    regexp: "  proxyTo: 'localhost:4567',"
-    line: "  proxyTo: 'localhost:{{ server_port }}',"
+  - name: Frontend - Set Frontend Port
+    ansible.builtin.replace :
+      path: "{{frontend_deploy_path}}/config.json5"
+      regexp: 'port: (\d*),$'
+      replace: "port: {{ frontend_port }},"
 
-- name: Frontend - Set title value
-  ansible.builtin.lineinfile:
-    path: "{{frontend_deploy_path}}/config.json5"
-    regexp: "  title: 'pxls.space',"
-    line: "  title: '{{ public_hostname }}',"
+  - name: Frontend - Set proxyTo value
+    ansible.builtin.replace:
+      path: "{{frontend_deploy_path}}/config.json5"
+      regexp: "proxyTo: '(.*)',"
+      replace: "proxyTo: '127.0.0.1:{{ server_port }}',"
 
-- name: Build frontend
-  command: /usr/bin/npm run build
-  args:
-    chdir: "{{ frontend_deploy_path }}"
+  - name: Frontend - Set title value
+    ansible.builtin.replace:
+      path: "{{frontend_deploy_path}}/config.json5"
+      regexp: "title: '(.*)',"
+      replace: "title: '{{ public_hostname }}',"
+
+  - name: Build frontend
+    command: /usr/bin/npm run build
+    args:
+      chdir: "{{ frontend_deploy_path }}"

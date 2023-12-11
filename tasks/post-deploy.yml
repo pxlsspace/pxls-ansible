@@ -1,78 +1,79 @@
----
-- name: Install systemd files
-  become: yes
-  template:
-    src: "files/systemd/{{ item.src }}"
-    dest: "/etc/systemd/system/{{ item.dest }}"
-  loop:
-    - { src: 'pxls-backend.service', dest: 'pxls-backend.service' }
-    - { src: 'pxls-backend.socket', dest: 'pxls-backend.socket' }
-    - { src: 'pxls-frontend.service', dest: 'pxls-frontend.service' }
-    - { src: 'pxls-frontend.socket', dest: 'pxls-frontend.socket' }
+- name: Post Deployment
+  block:
+  - name: Install systemd files
+    become: true
+    template:
+      src: "files/systemd/{{ item.src }}"
+      dest: "/etc/systemd/system/{{ item.dest }}"
+    loop:
+      - { src: 'pxls-backend.service', dest: 'pxls-backend.service' }
+      - { src: 'pxls-backend.socket', dest: 'pxls-backend.socket' }
+      - { src: 'pxls-frontend.service', dest: 'pxls-frontend.service' }
+      - { src: 'pxls-frontend.socket', dest: 'pxls-frontend.socket' }
 
-- name: Enable systemd units
-  become: true
-  systemd:
-    name: "{{ item.service }}.service"
-    state: started
-    enabled: true
-  loop:
-    - { service: 'pxls-backend' }
-    - { service: 'pxls-frontend' }
+  - name: Enable systemd units
+    become: true
+    systemd:
+      name: "{{ item.service }}.service"
+      state: started
+      enabled: true
+    loop:
+      - { service: 'pxls-backend' }
+      - { service: 'pxls-frontend' }
 
-- name: Wait 10 seconds
-  ansible.builtin.pause:
-    seconds: 10
-# Check Backend
-- name: Check if Pxls Backend is reachable
-  shell: "curl -sSf http://127.0.0.1:{{ server_port }}"
-  ignore_errors: true
-  register: backend_output
+  - name: Wait 10 seconds
+    ansible.builtin.pause:
+      seconds: 10
+  # Check Backend
+  - name: Check if Pxls Backend is reachable
+    shell: "curl -sSf http://127.0.0.1:{{ server_port }}"
+    ignore_errors: true
+    register: backend_output
 
-- name: Display status based on response
-  debug:
-    msg: "Backend is up and running"
-  when: backend_output.rc != 7
+  - name: Display status based on response
+    debug:
+      msg: "Backend is up and running"
+    when: backend_output.rc != 7
 
-- name: Display status if port is not reachable
-  debug:
-    msg: "Backend is not running or port is not reachable"
-  when: backend_output.rc == 7
+  - name: Display status if port is not reachable
+    debug:
+      msg: "Backend is not running or port is not reachable"
+    when: backend_output.rc == 7
 
-# Check Frontend
-- name: Check if Pxls Frontend is reachable
-  shell: "curl -sSf http://127.0.0.1:{{ frontend_port }}"
-  ignore_errors: true
-  register: frontend_output
+  # Check Frontend
+  - name: Check if Pxls Frontend is reachable
+    shell: "curl -sSf http://127.0.0.1:{{ frontend_port }}"
+    ignore_errors: true
+    register: frontend_output
 
-- name: Display status based on response
-  debug:
-    msg: "Frontend is up and running"
-  when: frontend_output.rc != 7
+  - name: Display status based on response
+    debug:
+      msg: "Frontend is up and running"
+    when: frontend_output.rc != 7
 
-- name: Display status if port is not reachable
-  debug:
-    msg: "Frontend is not running or port is not reachable"
-  when: frontend_output.rc == 7
+  - name: Display status if port is not reachable
+    debug:
+      msg: "Frontend is not running or port is not reachable"
+    when: frontend_output.rc == 7
 
-# Check NGINX
-- name: Check if NGINX is reachable
-  shell: "curl -ksSf {{ 'https' if provide_ssl_certificates else 'http' }}://127.0.0.1:{{ 443 if provide_ssl_certificates else 80 }}"
-  ignore_errors: true
-  register: nginx_output
+  # Check NGINX
+  - name: Check if NGINX is reachable
+    shell: "curl -ksSf {{ 'https' if provide_ssl_certificates else 'http' }}://127.0.0.1:{{ 443 if provide_ssl_certificates else 80 }}"
+    ignore_errors: true
+    register: nginx_output
 
-- name: Display status based on response
-  debug:
-    msg: "NGINX is up and running"
-  when: nginx_output.rc != 7
+  - name: Display status based on response
+    debug:
+      msg: "NGINX is up and running"
+    when: nginx_output.rc != 7
 
-- name: Display status if port is not reachable
-  debug:
-    msg: "NGINX is not running or port is not reachable"
-  when: nginx_output.rc == 7
+  - name: Display status if port is not reachable
+    debug:
+      msg: "NGINX is not running or port is not reachable"
+    when: nginx_output.rc == 7
 
-- name: Create tracking file for ansible
-  become: true
-  file: 
-    path: "/etc/.pxls_ansible"
-    state: touch
+  - name: Create tracking file for ansible
+    become: true
+    file: 
+      path: "/etc/.pxls_ansible"
+      state: touch

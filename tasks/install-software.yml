@@ -1,48 +1,49 @@
----
-- name: Install Node.js v{{ node_version }}.x LTS
-  become: yes
-  apt:
-    name: nodejs
-    state: present
+- name: Install common and required software
+  block:
+  - name: Install Node.js v{{ node_version }}.x LTS
+    become: true
+    apt:
+      name: nodejs
+      state: present
 
-- name: Install NGINX Webserver
-  become: yes
-  apt:
-    name: nginx-full
-    state: present
+  - name: Install NGINX Webserver
+    become: true
+    apt:
+      name: nginx-full
+      state: present
 
-- name: Install PostgreSQL
-  become: yes
-  apt:
-    name:
-      - postgresql
-    state: present
+  - name: Install PostgreSQL
+    become: true
+    apt:
+      name:
+        - postgresql
+      state: present
 
-- name: Install PHP packages (needed for the admin panel)
-  become: yes
-  debug:
-    msg: Auto-installation of the admin panel is not implemented, skipping.
-  # apt:
-  #   name:
-  #     - php7.4-fpm
-  #     - php7.4-cli
-  #     - php7.4-json
-  #     - php7.4-common
-  #     - php7.4-mysql
-  #     - php7.4-zip
-  #     - php7.4-gd
-  #     - php7.4-mbstring
-  #     - php7.4-curl
-  #     - php7.4-xml
-  #     - php7.4-bcmath
-  #     - php7.4-pgsql
-  #   state: present
+  - name: Install PHP packages (needed for the admin panel)
+    become: true
+    debug:
+      msg: Auto-installation of the admin panel is not implemented, skipping.
+    # apt:
+    #   name:
+    #     - php7.4-fpm
+    #     - php7.4-cli
+    #     - php7.4-json
+    #     - php7.4-common
+    #     - php7.4-mysql
+    #     - php7.4-zip
+    #     - php7.4-gd
+    #     - php7.4-mbstring
+    #     - php7.4-curl
+    #     - php7.4-xml
+    #     - php7.4-bcmath
+    #     - php7.4-pgsql
+    #   state: present
 
-- name: Install OpenJDK JRE, JDK and Maven
-  become: yes
-  apt:
-    name:
-      - openjdk-{{ java_version }}-jdk
-      - openjdk-{{ java_version }}-jre
-      - maven
-    state: present
+  - name: Install OpenJDK JRE, JDK and Maven
+    become: true
+    apt:
+      name:
+        - openjdk-{{ java_version }}-jdk
+        - openjdk-{{ java_version }}-jre
+        - maven
+      state: present
