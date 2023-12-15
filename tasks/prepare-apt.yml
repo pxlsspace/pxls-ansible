@@ -30,9 +30,9 @@
       line: "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_{{ node_version }}.x nodistro main"
       create: true
 
-  - name: Add PHP 7.x repository (needed for the admin panel)
-    command: sudo add-apt-repository ppa:ondrej/php --yes
-    become: true
+  # - name: Add PHP 7.x repository (needed for the admin panel)
+  #   command: sudo add-apt-repository ppa:ondrej/php --yes
+  #   become: true
 
   - name: Update APT package cache after adding repositories
     become: true
